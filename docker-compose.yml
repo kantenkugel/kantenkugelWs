@@ -1,0 +1,30 @@
+version: '3.6'
+
+services:
+  nginx:
+    build: ./containers/nginx
+    image: customnginx
+    ports:
+    - "80:80"
+    - "443:443"
+    volumes:
+    - ./statics:/data/statics
+    - ./keys:/data/keys
+    - ./sites:/etc/nginx/sites-enabled
+    - logs:/var/logs/nginx
+    restart: always
+    networks:
+    - nginx-internal
+
+  nodeapi:
+    build: ./containers/node
+    image: nodeapi
+    restart: always
+    networks:
+    - nginx-internal
+
+volumes:
+  logs:
+
+networks:
+  nginx-internal:
