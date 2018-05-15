@@ -10,7 +10,7 @@ The two Docker containers are:
 
 ## Licensing
 
-The two Docker containers (in the `containers` directory) both have their own licenses, which are included in the appropriate container directory.
+The two Docker containers (in the [containers directory](/containers)) both have their own licenses, which are included in the appropriate container directory.
 
 Everything else can be seen as public domain and has no copyright restrictions on it.
 
@@ -19,13 +19,13 @@ Everything else can be seen as public domain and has no copyright restrictions o
  - Docker
  - Docker-compose
 
-## Running it
+## Running It
 
  1. Create some nginx site configs (see the [Nginx Container Readme](/containers/nginx/README.MD) for an example)
-   - You should use the `/data/keys` mount point for ssl keys
-   - You should use the `/data/statics` mount point for static files
- 2. Make sure all ssl keys used by site configs are present in the `keys` folder.
-   - You can create temporary self-signed ones via the `gen_test_keys.sh` script
+    - You should use the `/data/keys` mount point for ssl keys
+    - You should use the `/data/statics` mount point for static files
+ 2. Make sure all ssl keys used by site configs are present in the `keys` folder
+    - You can create temporary self-signed ones via the `gen_test_keys.sh` script
  3. Start up the servers via `docker-compose up -d --build`
-   - This forces a rebuild of the images and then starts them up as daemons
-   - You can also use the `start.sh`
+    - This forces a rebuild of the images and then starts them up as daemons
+    - You can also use the `start.sh` script
