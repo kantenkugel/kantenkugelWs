@@ -7,8 +7,11 @@ This Container is heavily based on [Repo agarzon/nginx-config](https://github.co
 Changes made to original repo
 =============================
 
-- Changed the `try_files` directive inside of `php.conf` and `no-php.conf` to also try `$url.html` 
-which allows for SPAs with pre-rendered resource urls
+- Added a `spa.conf` template useful for SPA sites.
+  - Should be used inside of a `location` context, as it does not redefine a `location` block like `php.conf` and `no-php.conf` do.
+  - Additionally to direct uri matching and index matching, this also serves the `$uri.html` page if available (pre-rendered spa pages)
+  - Uses a `$spabase` variable to serve `$spabase/200.html` just before returning the 404 page. Useful if your SPA properly handles routes not avail as html files
+  - Added default `$spabase` variable to `templates/default.conf` (set to `/`)
 - Removed `.gitignore` as this is part of a bigger repo and there should be no misc files in here
 - Created `.dockerignore` and `Dockerfile`, which...
   - Uses nginx:alpine as base image
