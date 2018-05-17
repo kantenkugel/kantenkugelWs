@@ -57,6 +57,8 @@ if(clientId !== '' || clientSecret !== '') {
     });
     
     router.get('/callback', (req, res) => {
+        if(req.query.error || !req.query.code)
+            return res.end(":(");
         discordAuth.code.getToken({query: req.query}) //hide pathname due to being reverse proxied
         .then((tokens) => {
             const token = tokens.accessToken;
