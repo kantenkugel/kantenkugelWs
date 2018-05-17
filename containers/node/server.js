@@ -3,6 +3,7 @@
 import express from 'express';
 
 import hswh from './routes/hswh';
+import discord from './routes/discord';
 
 const app = express();
 
@@ -13,6 +14,7 @@ app.use((req, res, next) => {
 });
 
 app.use('/hswebhook', hswh);
+app.use('/discord', discord);
 
 //lastly, print default 404
 app.use((req, res) => {

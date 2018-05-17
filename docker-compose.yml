@@ -19,6 +19,8 @@ services:
   nodeapi:
     build: ./containers/node
     image: nodeapi
+    env_file:
+    - discord_application.env
     restart: always
     networks:
     - nginx-internal

@@ -12,8 +12,9 @@
   "license": "UNLICENSED",
   "repository": "",
   "dependencies": {
-    "express": "^4.16.3",
     "body-parser": "^1.15.2",
+    "client-oauth2": "^4.2.1",
+    "express": "^4.16.3",
     "request": "^2.79.0"
   },
   "devDependencies": {
