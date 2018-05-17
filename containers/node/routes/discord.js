@@ -62,23 +62,38 @@ if(clientId !== '' || clientSecret !== '') {
         discordAuth.code.getToken({query: req.query}) //hide pathname due to being reverse proxied
         .then((tokens) => {
             const token = tokens.accessToken;
+            const scopes = tokens.data.scope.split(' ');
+
+            //abort if no useful scope was found
+            if(scopes.length === 0 || (!scopes.includes('identify') && !scopes.includes('connections')))
+                return res.send("No (useful) scopes :(");
 
             let responseContent = '';
 
             Promise.all([
-                fetch('users/@me', token),
-                fetch('users/@me/connections', token)
+                (scopes.includes('identify') ? fetch('users/@me', token) : false),
+                (scopes.includes('connections') ? fetch('users/@me/connections', token) : false)
             ])
             //handle user info + connections, add to guild
             .then(([{body: user}, {body: connections}]) => {
-                let response = `Connections for ${user.username}#${user.discriminator} (${user.id})<br/>`;
-                let connectionString = connections
-                    //.filter(conn => conn.verified)
-                    .map(conn => `<li>${normalizeString(conn.type)}: ${conn.name}</li>`)
-                    .join('');
-                connectionString = (connectionString === '') ? 'No Connections' : '<ul>'+connectionString+'</ul>';
-                responseContent = response + connectionString;
-                if(botToken !== '' && guildId !== '')
+                const userInfo = !user ? '' : `Connections for ${user.username}#${user.discriminator} (${user.id})<br/>`;
+
+                let connectionString;
+                if(connections) {
+                    connectionString = connections
+                        //.filter(conn => conn.verified)
+                        .map(conn => `<li>${normalizeString(conn.type)}: ${conn.name}</li>`)
+                        .join('');
+                    connectionString = (connectionString === '') ? 'No Connections' : '<ul>'+connectionString+'</ul>';
+                } else {
+                    connectionString = 'Connections scope not granted...';
+                }
+
+                //set conent to be printed in next step / catch-block
+                responseContent = userInfo + connectionString;
+
+                //if identify and guilds.join scope are present, as well as bot token and guild id env variables, join guild
+                if(user && scopes.includes('guilds.join') && botToken !== '' && guildId !== '')
                     return fetch(`guilds/${guildId}/members/${user.id}`, false, {
                         method: 'PUT',
                         headers: {'Authorization': 'Bot ' + botToken},
