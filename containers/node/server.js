@@ -7,9 +7,13 @@ import discord from './routes/discord';
 
 const app = express();
 
+app.set('views', './views');
+app.set('view engine', 'ejs');
+app.set('trust proxy', true);
+
 //log requests (debug only)
 app.use((req, res, next) => {
-    console.log(req.method+' => '+req.url);
+    console.log(`[${req.ip}] ${req.method} => ${req.url}`);
     next();
 });
 

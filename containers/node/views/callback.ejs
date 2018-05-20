@@ -1,0 +1,20 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Discord Oauth</title>
+  <meta name="description" content="Callback page for Discord Oauth">
+  <meta name="author" content="kantenkugel">
+</head>
+
+<body>
+  <h3><%= message %></h3>
+  <script>
+    if(window.opener)
+      window.opener.postMessage("<%= postMessage %>", window.location.origin);
+    setTimeout(window.close, 2000);
+  </script>
+</body>
+</html>
