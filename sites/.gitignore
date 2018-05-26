@@ -2,3 +2,6 @@
 *
 # Except this file
 !.gitignore
+# And selected examples
+!kantenkugel.com.conf
+!localhost.conf
