@@ -13,9 +13,7 @@ const clientId = process.env.CLIENT_ID || '';
 const clientSecret = process.env.CLIENT_SECRET || '';
 
 const botToken = process.env.BOT_TOKEN || '';
-const guildId = process.env.GUILD_ID || '';
-
-const redirectUri = 'https://' + (process.env.HOST || 'localhost') + '/api/discord/callback';
+const guildIds = process.env.GUILD_IDS ? JSON.parse(process.env.GUILD_IDS) : [];
 
 const encKey = crypto.randomBytes(32);
 
@@ -24,14 +22,19 @@ const sessionsReg = {
     state: {}
 };
 
+const guilds = {};
+
 const discordAuth = new Oauth({
     clientId,
     clientSecret,
-    redirectUri,
     accessTokenUri: 'https://discordapp.com/api/oauth2/token',
     authorizationUri: 'https://discordapp.com/api/oauth2/authorize',
     scopes: ['identify', 'connections', 'guilds.join']
 });
+
+function getRedirectUri(req) {
+    return 'https://' + req.hostname + '/api/discord/callback';
+}
 
 function encrypt(input) {
     if(input === null)
@@ -123,6 +126,19 @@ if(clientId !== '' || clientSecret !== '') {
         }
     }, 60000).unref();
 
+    //if guild feature enabled, fetch available guilds once
+    if(botToken !== '' && guildIds.length > 0) {
+        fetch('users/@me/guilds', false, { headers: { 'Authorization': 'Bot ' + botToken }})
+        .then(({body: guildArr}) => {
+            guildArr
+                .filter(g => guildIds.includes(parseInt(g.id)))
+                .forEach(g => guilds[g.id] = g.name);
+        })
+        .catch((error) => {
+            console.error(error);
+        });
+    }
+
     //create a new session
     router.post('/session', (req, res) => {
         let id, state;
@@ -144,7 +160,7 @@ if(clientId !== '' || clientSecret !== '') {
 
         return res.status(200).json({
             id,
-            url: discordAuth.code.getUri({state})
+            url: discordAuth.code.getUri({state, redirectUri: getRedirectUri(req)})
         });
     });
 
@@ -212,18 +228,44 @@ if(clientId !== '' || clientSecret !== '') {
         });
     });
 
-    //TODO: add to guild given guild id and token
-    router.put('/guilds/:id', (req, res) => {
-        //todo
-        /*
-        if(user && scopes.includes('guilds.join') && botToken !== '' && guildId !== '')
-            return fetch(`guilds/${guildId}/members/${user.id}`, false, {
+    router.get('/guilds', (req, res) => {
+        res.json(guilds);
+    });
+
+    //TODO: add to guild given guild id, userid and token
+    router.put('/guilds/:guildId/:userId', (req, res) => {
+        if(!req.headers.token)
+            return res.status(400).json({error: 'no token header'});
+        if(!req.params.userId)
+            return res.status(400).json({error: 'no userId in body'});
+        if(!req.params.guildId in guilds)
+            return res.status(400).json({error: 'given guild not allowed'});
+
+        decrypt(req.headers.token)
+        .then(({token, expires, scopes}) => {
+            if(Math.floor(Date.now()/1000) > expires)
+                return res.status(400).json({error: 'token expired'});
+
+            if(!scopes.includes('guilds.join'))
+                return res.status(400).json({error: 'no guilds.join scope available'});
+
+            fetch(`guilds/${req.params.guildId}/members/${req.params.userId}`, false, {
                 method: 'PUT',
                 headers: {'Authorization': 'Bot ' + botToken},
                 body: { 'access_token': token }
+            })
+            .then(({code}) => {
+                res.status(code).json({status: code === 201 ? 'added' : 'alreadyAdded'});
+            })
+            .catch((error) => {
+                console.error("Error adding user to guild", error);
+                res.status(500).json({error: 'could not add user'});
             });
-        */
-        res.sendStatus(404);
+        })
+        .catch((error) => {
+            console.error("Unable to decrypt given token");
+            res.status(400).json({error: 'invalid token'});
+        });
     });
 
     //oauth callback. render 'callback' view with message (shown) and postMessage (sent to parent window to notify of completion)
@@ -238,7 +280,7 @@ if(clientId !== '' || clientSecret !== '') {
             return res.render('callback', {message: 'Already authorized, aborting!', postMessage: 'alreadyAuthroized'});
 
         if(req.query.code) {
-            discordAuth.code.getToken({query: req.query}) //hide pathname due to being reverse proxied
+            discordAuth.code.getToken({query: req.query}, {redirectUri: getRedirectUri(req)}) //hide pathname due to being reverse proxied
             .then((tokens) => {
                 const token = tokens.accessToken;
                 const expires = Math.floor(tokens.expires.getTime()/1000);
