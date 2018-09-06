@@ -14,7 +14,10 @@
   <script>
     if(window.opener)
       window.opener.postMessage("<%= postMessage %>", window.location.origin);
-    setTimeout(window.close, 2000);
+    if("<%= postMessage %>" === "ok")
+      window.close();
+    else
+      setTimeout(window.close, 3000);
   </script>
 </body>
 </html>

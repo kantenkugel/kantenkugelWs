@@ -24,9 +24,37 @@ services:
     restart: always
     networks:
     - nginx-internal
+  
+  haste:
+    build: ./containers/haste
+    image: haste
+    ports:
+    - "7777:7777"
+    environment:
+    - PGHOST=postgres
+    env_file:
+    - postgres.env
+    restart: always
+    depends_on:
+    - postgres
+    networks:
+    - postgresdb
+    - nginx-internal
+    
+  postgres:
+    image: postgres:10-alpine
+    env_file:
+    - postgres.env
+    restart: always
+    volumes:
+    - dbstore:/var/lib/postgresql/data
+    networks:
+    - postgresdb
 
 volumes:
   logs:
+  dbstore:
 
 networks:
+  postgresdb:
   nginx-internal:
