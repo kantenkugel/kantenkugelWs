@@ -1,9 +1,9 @@
 FROM node:8-alpine
 
-LABEL author="Kantenkugel (Michael Ritter)"
-LABEL version="1.1"
-
 RUN apt update && apt upgrade -y && apt install -y git
+
+LABEL author="Kantenkugel (Michael Ritter)"
+LABEL version="1.2"
 
 RUN git clone https://github.com/kantenkugel/haste-server.git
 
